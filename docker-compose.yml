@@ -1,0 +1,56 @@
+version: "3"
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "4306:3306"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: MyR00tMySQLPa$$5w0rD
+      MYSQL_DATABASE: MyWordPressDatabaseName
+      MYSQL_USER: MyWordPressUser
+      MYSQL_PASSWORD: Pa$$5w0rD
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: MyR00tMySQLPa$$5w0rD
+      PMA_HOST: db
+      PMA_USER: MyWordPressUser
+      PMA_PASSWORD: Pa$$5w0rD
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+  wordpress:
+    image: wordpress:latest
+    restart: always
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: MyWordPressUser
+      WORDPRESS_DB_PASSWORD: Pa$$5w0rD
+      WORDPRESS_DB_NAME: MyWordPressDatabaseName
+    depends_on:
+      - db
+    volumes:
+      - ./src/themes/:/var/www/html/wp-content/themes
+      - ./src/plugins/:/var/www/html/wp-content/plugins
+      - ./src/uploads/:/var/www/html/wp-content/uploads
+      - ./config/wp_php.ini:/usr/local/etc/php/conf.d/conf.ini
+      - ./src:/var/www/html
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/log:/var/log/nginx
+      - ./src:/usr/share/nginx/html
+    depends_on:
+      - wordpress
